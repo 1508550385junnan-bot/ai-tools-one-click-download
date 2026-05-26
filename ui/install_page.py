@@ -312,12 +312,12 @@ class InstallPage(ctk.CTkFrame):
 
     def _open_cmd_for_verification(self):
         """安装完成后自动打开命令行窗口，显示版本验证信息"""
-        # 构建验证命令批处理脚本
         verify_cmds = []
         verify_cmds.append("@echo off")
+        verify_cmds.append("chcp 65001 > nul")          # UTF-8 编码
         verify_cmds.append("title AI工具一键下载 - 版本验证")
         verify_cmds.append("echo ========================================")
-        verify_cmds.append("echo   AI 工具一键下载 v2.0 - 版本验证")
+        verify_cmds.append("echo   AI 工具一键下载 v2.2 - 版本验证")
         verify_cmds.append("echo   作者: 大虎子")
         verify_cmds.append("echo ========================================")
         verify_cmds.append("echo.")
@@ -329,14 +329,14 @@ class InstallPage(ctk.CTkFrame):
             command = verify.get("command")
             if command:
                 verify_cmds.append(f"echo --- {name} ---")
-                verify_cmds.append(f"{command} 2^>^&1")
+                verify_cmds.append(command)
                 verify_cmds.append("echo.")
             else:
                 check_paths = tool.get("install", {}).get("check_paths", [])
                 if check_paths:
                     verify_cmds.append(f"echo --- {name}: 检查安装文件 ---")
                     for p in check_paths:
-                        verify_cmds.append(f"if exist \"{p}\" (echo   [√] {p}) else (echo   [×] {p})")
+                        verify_cmds.append(f"if exist \"{p}\" (echo   [OK] {p}) else (echo   [X] {p})")
                 else:
                     verify_cmds.append(f"echo --- {name}: GUI应用，请手动验证 ---")
                 verify_cmds.append("echo.")
@@ -347,25 +347,22 @@ class InstallPage(ctk.CTkFrame):
         verify_cmds.append("pause > nul")
 
         try:
-            # 写入临时批处理文件
             bat_path = os.path.join(os.environ.get("TEMP", "."), "ai_tools_verify.bat")
-            with open(bat_path, "w", encoding="gbk") as f:
-                f.write("\r\n".join(verify_cmds))
+            with open(bat_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(verify_cmds))
 
-            # 打开新的命令窗口执行验证
             subprocess.Popen(
                 ["cmd", "/k", bat_path],
                 creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == "nt" else 0,
             )
-        except Exception as e:
-            # 如果打开cmd失败，至少尝试用start命令
+        except Exception:
             try:
                 subprocess.Popen(
                     ["cmd", "/c", "start", "cmd", "/k", bat_path],
                     shell=True,
                 )
             except Exception:
-                pass  # 静默失败，不影响主流程
+                pass
 
     def _safe_update(self, step_name, status, detail=""):
         """线程安全的UI更新"""

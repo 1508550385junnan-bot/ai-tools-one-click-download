@@ -172,7 +172,7 @@ TOOLS = {
             ]
         },
         "verify": {
-            "command": "hermes --version",
+            "command": "hermes version",
             "expected": None,
             "method": "exit_code_zero"
         },
