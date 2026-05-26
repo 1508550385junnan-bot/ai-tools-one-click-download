@@ -6,7 +6,7 @@ from config import (
     CARD_BG, TEXT_COLOR, TEXT_SECONDARY, ACCENT_COLOR,
     SUCCESS_COLOR, WARNING_COLOR, ERROR_COLOR, THEME_COLOR,
 )
-from core.api_configurator import PROVIDERS, SUPPORTED_APPS, try_configure
+from core.api_configurator import PROVIDERS, SUPPORTED_APPS, try_configure, test_api_connection
 
 
 class APIConfigPage(ctk.CTkFrame):
@@ -149,6 +149,14 @@ class APIConfigPage(ctk.CTkFrame):
             btn.pack(side="right")
             self.provider_buttons[prov_key] = (card, btn)
 
+        # 兼容性警告（当选择 Claude Code + 非 Anthropic 厂家时显示）
+        self.compat_warning = ctk.CTkLabel(
+            scroll, text="",
+            font=ctk.CTkFont(size=12),
+            text_color=WARNING_COLOR,
+            justify="left",
+        )
+
         # === 步骤3: 输入 API Key ===
         ctk.CTkLabel(
             scroll, text="▎步骤 3: 输入 API Key 并一键配置",
@@ -177,26 +185,6 @@ class APIConfigPage(ctk.CTkFrame):
         )
         self.api_key_entry.pack(fill="x", pady=(8, 12))
 
-        # 模型选择下拉
-        model_frame = ctk.CTkFrame(key_inner, fg_color="transparent")
-        model_frame.pack(fill="x", pady=(0, 10))
-
-        ctk.CTkLabel(
-            model_frame, text="模型:",
-            font=ctk.CTkFont(size=13), text_color=TEXT_SECONDARY,
-        ).pack(side="left", padx=(0, 10))
-
-        self.model_var = ctk.StringVar(value="自动选择")
-        self.model_menu = ctk.CTkOptionMenu(
-            model_frame, values=["自动选择"],
-            variable=self.model_var,
-            font=ctk.CTkFont(size=13),
-            fg_color=CARD_BG, text_color=TEXT_COLOR,
-            button_color=ACCENT_COLOR, button_hover_color="#0099cc",
-            width=200, height=32,
-        )
-        self.model_menu.pack(side="left")
-
         # 配置按钮
         self.config_btn = ctk.CTkButton(
             key_inner, text="⚡ 一键配置",
@@ -221,17 +209,33 @@ class APIConfigPage(ctk.CTkFrame):
 
     def _select_app(self, app_key):
         """选择要配置的程序"""
-        # 重置之前的选择
         for key, (card, btn) in self.app_buttons.items():
             card.configure(border_color="#2a2a4a")
             if SUPPORTED_APPS[key]["configurable"]:
                 btn.configure(fg_color=CARD_BG, text_color=ACCENT_COLOR)
 
-        # 高亮选中的
         card, btn = self.app_buttons[app_key]
         card.configure(border_color=ACCENT_COLOR)
         btn.configure(fg_color=ACCENT_COLOR, text_color="#0a0a1a")
         self.selected_app = app_key
+
+        # Claude Code 选择时 — 提示 relay
+        if app_key == "claude-code":
+            if "anthropic" in self.provider_buttons:
+                card, btn = self.provider_buttons["anthropic"]
+                card.configure(border_color=SUCCESS_COLOR, border_width=2)
+
+            self.compat_warning.configure(
+                text="💡 Anthropic 官方：开箱即用。\n"
+                     "   其他厂家：需通过 API 中继服务（OpenRouter/SiliconFlow 等）转发。\n"
+                     "   环境变量和配置文件会自动设置。",
+            )
+            self.compat_warning.pack(anchor="w", pady=(10, 0))
+        else:
+            if "anthropic" in self.provider_buttons:
+                card, btn = self.provider_buttons["anthropic"]
+                card.configure(border_color="#2a2a4a", border_width=1)
+            self.compat_warning.pack_forget()
 
     def _select_provider(self, prov_key):
         """选择模型厂家"""
@@ -243,11 +247,24 @@ class APIConfigPage(ctk.CTkFrame):
         card.configure(border_color=ACCENT_COLOR)
         btn.configure(fg_color=ACCENT_COLOR, text_color="#0a0a1a")
         self.selected_provider = prov_key
+        self.update()
 
-        # 更新模型下拉
-        models = ["自动选择"] + PROVIDERS[prov_key]["models"]
-        self.model_menu.configure(values=models)
-        self.model_var.set("自动选择")
+        # Claude Code + 非 Anthropic → relay 提示
+        if self.selected_app == "claude-code" and prov_key != "anthropic":
+            provider = PROVIDERS[prov_key]
+            if provider["claude_compat"]:
+                # 已验证有 Anthropic 端点
+                self.compat_warning.configure(
+                    text=f"✅ {provider['name']} 已验证支持 Anthropic 格式。\n"
+                         f"   可直接用于 Claude Code，无需 relay。",
+                )
+            else:
+                self.compat_warning.configure(
+                    text=f"💡 {provider['name']} 需 API 中继服务转发。\n"
+                         f"   BASE_URL 已设为 {provider['base_url']}\n"
+                         "   若直连不通，请填入 relay 服务地址。",
+                )
+            self.compat_warning.pack(anchor="w", pady=(10, 0))
 
     def _on_configure(self):
         """执行配置"""
@@ -263,7 +280,7 @@ class APIConfigPage(ctk.CTkFrame):
             self._show_status("请输入 API Key（步骤3）", WARNING_COLOR)
             return
 
-        model = None if self.model_var.get() == "自动选择" else self.model_var.get()
+        model = None  # 自动选择该厂家第一个模型
 
         self.config_btn.configure(state="disabled", text="配置中...")
         self._show_status("正在配置，请稍候...", WARNING_COLOR)
@@ -279,8 +296,42 @@ class APIConfigPage(ctk.CTkFrame):
         self.config_btn.configure(state="normal", text="⚡ 一键配置")
         if result["success"]:
             self._show_status(result["message"], SUCCESS_COLOR)
+            # 自动测试连接
+            self._run_api_test()
         else:
             self._show_status(f"配置失败: {result.get('error', '未知错误')}", ERROR_COLOR)
+
+    def _run_api_test(self):
+        """后台测试 API 连接"""
+        api_key = self.api_key_entry.get().strip()
+        model = None  # 自动选择该厂家第一个模型
+        prov_key = self.selected_provider
+
+        self._show_status(
+            self.status_label.cget("text") + "\n\n🔍 正在测试 API 连接...",
+            WARNING_COLOR
+        )
+
+        def _do():
+            result = test_api_connection(prov_key, api_key, model)
+            self.after(0, lambda: self._on_test_result(result))
+
+        threading.Thread(target=_do, daemon=True).start()
+
+    def _on_test_result(self, result):
+        """API 测试结果显示"""
+        prev = self.status_label.cget("text").split("\n\n🔍")[0]
+        if result["ok"]:
+            self._show_status(
+                f"{prev}\n\n✅ API 测试通过: {result['message']}",
+                SUCCESS_COLOR
+            )
+        else:
+            self._show_status(
+                f"{prev}\n\n❌ API 测试失败: {result['message']}\n"
+                f"请检查 API Key 和网络后重新配置",
+                ERROR_COLOR
+            )
 
     def _show_status(self, text, color):
         self.status_label.configure(text=text, text_color=color)

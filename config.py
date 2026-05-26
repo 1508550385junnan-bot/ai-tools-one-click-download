@@ -27,7 +27,7 @@ CHUNK_SIZE = 8192                  # 下载分块大小
 
 # --- UI相关 ---
 APP_TITLE = "AI 工具一键下载"
-APP_VERSION = "2.4"
+APP_VERSION = "2.5"
 APP_AUTHOR = "大虎子"
 WINDOW_WIDTH = 900
 WINDOW_HEIGHT = 680
