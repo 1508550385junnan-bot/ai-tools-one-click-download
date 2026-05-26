@@ -1,5 +1,5 @@
 # ui/main_window.py - 主窗口
-# v2.2: 右上角版本+更新提醒，自动检查更新
+# v2.4: 右上角版本+更新提醒，自动检查更新 + API配置入口
 import threading
 import urllib.request
 import json
@@ -14,6 +14,7 @@ from config import (
 from ui.select_page import ToolSelectPage
 from ui.sponsor_page import SponsorPage
 from ui.install_page import InstallPage
+from ui.api_config_page import APIConfigPage
 
 
 class MainWindow(ctk.CTk):
@@ -84,7 +85,14 @@ class MainWindow(ctk.CTk):
         )
         self.pages["install"] = install
 
-        # 在 select 页面上叠加更新栏（右上角）
+        # API 配置页
+        api_config = APIConfigPage(
+            self.container,
+            on_back=lambda: self.show_page("select"),
+        )
+        self.pages["api_config"] = api_config
+
+        # 在 select 页面上叠加更新栏和API配置按钮（右上角）
         self._add_update_bar(select)
 
     def _add_update_bar(self, select_page):
@@ -99,6 +107,19 @@ class MainWindow(ctk.CTk):
             text_color=TEXT_SECONDARY,
         )
         self.version_label.pack(side="left", padx=(0, 5))
+
+        # API 配置按钮
+        self.api_config_btn = ctk.CTkButton(
+            bar, text="API 配置",
+            font=ctk.CTkFont(size=10),
+            fg_color=SUCCESS_COLOR,
+            text_color="#0a0a1a",
+            hover_color="#00cc66",
+            width=65, height=24,
+            corner_radius=6,
+            command=lambda: self.show_page("api_config"),
+        )
+        self.api_config_btn.pack(side="left", padx=(0, 5))
 
         # 检查更新按钮
         self.update_btn = ctk.CTkButton(

@@ -1,5 +1,5 @@
 {
-  "version": "2.3",
+  "version": "2.4",
   "download_url": "https://github.com/1508550385junnan-bot/ai-tools-one-click-download/releases/latest/download/AI工具一键下载.exe",
-  "changelog": "v2.3 更新内容：\n- 修复 Hermes Agent 版本验证命令（hermes version）\n- 修复安装后 cmd 窗口中文乱码（UTF-8编码）\n- 修复 CC Switch 仓库迁移和安装验证\n- 修复 Codex/Claude/Hermes 下载链接失效\n- GUI 工具（CC Switch）PE 文件版本号自动读取\n- 版本号显示精简（仅显示数字版本）\n- 管理员权限自动请求"
+  "changelog": "v2.4 更新内容：\n- 新增 API 模型一键配置功能\n- 支持 Claude Code / Hermes Agent 配置主流厂家 API\n- 8大模型厂家：OpenAI / Anthropic / Google / DeepSeek / Meta / xAI / Mistral / 阿里\n- 三步完成配置：选择程序 → 选择厂家 → 输入Key一键配置\n- Codex CLI 仅支持 OpenAI 官方，显示为不支持\n- 修复 Hermes 版本验证命令\n- 修复 cmd 窗口中文乱码"
 }
