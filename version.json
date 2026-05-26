@@ -1,0 +1,5 @@
+{
+  "version": "2.2",
+  "download_url": "https://github.com/1508550385junnan-bot/ai-tools-one-click-download/releases/latest/download/AI工具一键下载.exe",
+  "changelog": "v2.2 更新内容：\n- 移除支付宝支付，改为赞助图片+文案\n- 启动时自动检测已安装工具版本\n- 卡片按钮显示版本号（安装/已安装vX.X/升级）\n- Splash 加载界面，全自动启动\n- 右上角版本更新检查+提醒\n- 安装完成后自动弹出命令行验证\n- 修复 CC Switch/Codex/Claude/Hermes 下载链接\n- npm/pip 工具直接安装无需下载文件\n- 精简依赖仅3个包"
+}
