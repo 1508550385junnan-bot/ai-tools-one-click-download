@@ -7,8 +7,11 @@
   <img src="https://img.shields.io/github/stars/1508550385junnan-bot/ai-tools-one-click-download?style=social" alt="stars">
 </p>
 
-<h1 align="center">🤖 AI Tools One-Click Installer</h1>
-<p align="center"><b>Your AI dev environment, one double-click away. No terminal. No tutorials. No pain.</b></p>
+<h1 align="center">🤖 AI 工具一键下载 / AI Tools One-Click Installer</h1>
+<p align="center">
+  <b>双击 EXE，3 分钟搭好 AI 编程环境。零终端、零教程、零痛苦。</b><br>
+  <sub>Your AI dev environment, one double-click away. No terminal. No tutorials. No pain.</sub>
+</p>
 
 <p align="center">
   <a href="#-the-problem--the-solution">Why</a> •
