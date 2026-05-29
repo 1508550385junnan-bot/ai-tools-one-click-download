@@ -44,3 +44,8 @@
 - 做什么：测试当前应用在远端 `version.json` 版本高于本地时会提示更新，远端版本相同或更低时不提示。
 - 不做什么：不自动覆盖安装 EXE；只验证检测与下载入口逻辑。
 - 约束条件：低版本升级判断必须使用数字版本比较，而不是简单字符串不相等。
+
+## R10 修复 Hermes 安装在 LocalAppData Python 目录时误判未安装
+- 做什么：识别 `C:\Users\<用户>\AppData\Local\Programs\Python\Python311\Scripts\hermes.exe` 等本机 Python Scripts 安装路径，即使当前应用 PATH 不包含该目录也显示已安装。
+- 不做什么：不卸载或重装用户已有 Hermes；不修改 Hermes API 配置流程。
+- 约束条件：必须保留 `hermes version` 验证；Hermes 输出包含非 GBK 字符时不能因为解码失败而误判未安装。

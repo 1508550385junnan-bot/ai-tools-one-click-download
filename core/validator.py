@@ -4,6 +4,7 @@ import sys
 import subprocess
 import logging
 import shlex
+import glob
 
 logger = logging.getLogger(__name__)
 
@@ -108,9 +109,29 @@ def _existing_paths(paths: list[str]) -> list[str]:
     found = []
     for path in paths:
         expanded = os.path.expandvars(path)
-        if os.path.exists(expanded):
-            found.append(expanded)
+        matches = glob.glob(expanded) if glob.has_magic(expanded) else [expanded]
+        for candidate in matches:
+            if os.path.exists(candidate) and candidate not in found:
+                found.append(candidate)
     return found
+
+
+def _common_python_script_dirs() -> list[str]:
+    dirs = []
+    roots = [
+        os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python"),
+        os.path.expandvars("%APPDATA%\\Python"),
+        os.path.expandvars("%ProgramFiles%"),
+        os.path.expandvars("%ProgramFiles(x86)%"),
+    ]
+    for root in roots:
+        if not root or not os.path.isdir(root):
+            continue
+        for pattern in ("Python*\\Scripts", "Python\\Python*\\Scripts"):
+            for path in glob.glob(os.path.join(root, pattern)):
+                if os.path.isdir(path) and path not in dirs:
+                    dirs.append(path)
+    return dirs
 
 
 def _command_with_executable(command: str, executable: str) -> str:
@@ -197,6 +218,7 @@ class Validator:
                 result = subprocess.run(
                     command, shell=True,
                     capture_output=True, text=True, timeout=30,
+                    encoding="utf-8", errors="replace",
                     env={**os.environ, "PATH": self._get_extended_path(check_paths)}
                 )
                 version_output = (
@@ -242,6 +264,7 @@ class Validator:
                 result = subprocess.run(
                     candidate, shell=True,
                     capture_output=True, text=True, timeout=30,
+                    encoding="utf-8", errors="replace",
                     env={**os.environ, "PATH": self._get_extended_path(check_paths)}
                 )
                 version_output = result.stdout.strip() or result.stderr.strip()
@@ -278,8 +301,14 @@ class Validator:
             os.path.expandvars("%ProgramFiles%\\nodejs"),
             os.path.expandvars("%ProgramFiles(x86)%\\nodejs"),
             os.path.expandvars("%APPDATA%\\npm"),
+            os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python313"),
+            os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python313\\Scripts"),
             os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python312"),
             os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python312\\Scripts"),
+            os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python311"),
+            os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python311\\Scripts"),
+            os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python310"),
+            os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python310\\Scripts"),
             os.path.expandvars("%APPDATA%\\Python\\Python313\\Scripts"),
             os.path.expandvars("%APPDATA%\\Python\\Python312\\Scripts"),
             os.path.expandvars("%APPDATA%\\Python\\Python311\\Scripts"),
@@ -292,9 +321,10 @@ class Validator:
         ]
         for path in check_paths or []:
             expanded = os.path.expandvars(path)
-            parent = os.path.dirname(expanded)
+            parent = os.path.dirname(glob.glob(expanded)[0]) if glob.has_magic(expanded) and glob.glob(expanded) else os.path.dirname(expanded)
             if parent:
                 extras.append(parent)
+        extras.extend(_common_python_script_dirs())
         for p in extras:
             if os.path.isdir(p):
                 paths.append(p)

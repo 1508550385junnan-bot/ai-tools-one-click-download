@@ -4,6 +4,7 @@ import os
 import subprocess
 import logging
 import time
+import glob
 from config import DOWNLOAD_DIR
 
 logger = logging.getLogger(__name__)
@@ -247,7 +248,8 @@ class Installer:
         """检查文件是否存在"""
         for p in check_paths:
             expanded = os.path.expandvars(p)
-            if os.path.exists(expanded):
+            matches = glob.glob(expanded) if glob.has_magic(expanded) else [expanded]
+            if any(os.path.exists(path) for path in matches):
                 return True
         return False
 

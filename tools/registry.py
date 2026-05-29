@@ -194,9 +194,16 @@ TOOLS = {
                 os.path.expandvars("%APPDATA%\\Python\\Python311\\Scripts\\hermes.cmd"),
                 os.path.expandvars("%APPDATA%\\Python\\Python310\\Scripts\\hermes.exe"),
                 os.path.expandvars("%APPDATA%\\Python\\Python310\\Scripts\\hermes.cmd"),
+                os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python313\\Scripts\\hermes.exe"),
+                os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python313\\Scripts\\hermes.cmd"),
                 os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python312\\Scripts\\hermes.exe"),
                 os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python312\\Scripts\\hermes.cmd"),
-                os.path.expandvars("%APPDATA%\\Python\\Python312\\Scripts\\hermes.exe"),
+                os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python311\\Scripts\\hermes.exe"),
+                os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python311\\Scripts\\hermes.cmd"),
+                os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python310\\Scripts\\hermes.exe"),
+                os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python310\\Scripts\\hermes.cmd"),
+                os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python*\\Scripts\\hermes.exe"),
+                os.path.expandvars("%APPDATA%\\Python\\Python*\\Scripts\\hermes.exe"),
             ]
         },
         "verify": {

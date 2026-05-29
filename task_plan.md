@@ -15,6 +15,7 @@
 | P7 | 升级版本、构建 exe、同步到 GitHub 仓库 | complete |
 | P8 | 修复 Hermes、添加 OpenClaw、在线检测 AI 工具新版本 | complete |
 | P9 | 升级 v2.7、测试低版本远程升级、打包并发布 GitHub | complete |
+| P10 | 修复 Hermes LocalAppData Python 3.11 安装路径和输出解码误判 | complete |
 
 ## 错误记录
 | 错误 | 尝试 | 处理 |
@@ -31,3 +32,4 @@
 | 优先建立本地可运行测试/脚本验证 | 避免只凭代码阅读判断安装器修复是否有效 |
 | 发布版本定为 v2.6 | v2.5 已存在，当前修复 API 配置、CC Switch 安装、更新检测和打包发布，符合补丁/小版本升级语义 |
 | 新增发布版本定为 v2.7 | 本轮新增 OpenClaw、Hermes 检测回退、在线工具更新检测和低版本升级判断，属于可发布功能更新 |
+| 新增发布版本定为 v2.8 | 本轮修复 v2.7 未覆盖的 Hermes LocalAppData Python 3.11 路径和 Windows 输出解码失败，属于检测可靠性修复 |

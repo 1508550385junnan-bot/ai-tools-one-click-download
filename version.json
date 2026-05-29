@@ -1,5 +1,5 @@
 {
-  "version": "2.7",
+  "version": "2.8",
   "download_url": "https://github.com/1508550385junnan-bot/ai-tools-one-click-download/releases/latest/download/AI.exe",
-  "changelog": "v2.7 更新：\n- 修复 Hermes Agent 已安装但显示未下载的问题\n- 新增 OpenClaw 安装与检测功能\n- 支持联网检测 Codex CLI / Claude Code / Hermes Agent / OpenClaw / CC Switch 最新版本并提示升级\n- 修复应用自身远程升级判断，只有远端版本高于本地时才提示\n- 增加低版本远程升级、在线版本解析和 CLI 路径回退测试"
+  "changelog": "v2.8 更新：\n- 修复 Hermes Agent 安装在 LocalAppData Python 3.11 Scripts 时仍显示未安装的问题\n- Hermes 检测支持动态扫描 Python Scripts 目录和通配路径\n- 修复 Windows 默认编码无法解码 Hermes 输出导致检测失败的问题\n- 增加 PATH 为空时仍能检测本机 Hermes 的回归测试"
 }

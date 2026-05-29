@@ -120,6 +120,18 @@ class VersionUtilsTests(unittest.TestCase):
         self.assertEqual(tool["install"]["command"], "npm install -g openclaw")
         self.assertEqual(tool["verify"]["command"], "openclaw --version")
 
+    def test_hermes_registry_covers_local_python_scripts(self):
+        paths = TOOLS["hermes-agent"]["install"]["check_paths"]
+
+        self.assertTrue(
+            any("Local\\Programs\\Python\\Python311\\Scripts\\hermes.exe" in path for path in paths),
+            paths,
+        )
+        self.assertTrue(
+            any("Local\\Programs\\Python\\Python*\\Scripts\\hermes.exe" in path for path in paths),
+            paths,
+        )
+
 
 class InstallerBehaviorTests(unittest.TestCase):
     def test_downloader_skips_complete_existing_file(self):
@@ -173,6 +185,26 @@ class InstallerBehaviorTests(unittest.TestCase):
 
         self.assertTrue(result["success"], result)
         self.assertIn("0.15.1", result["version"])
+
+    def test_validator_detects_local_python_hermes_without_path(self):
+        if os.name != "nt":
+            self.skipTest("Windows Hermes path test")
+
+        hermes_path = os.path.expandvars(
+            "%LOCALAPPDATA%\\Programs\\Python\\Python311\\Scripts\\hermes.exe"
+        )
+        if not os.path.exists(hermes_path):
+            self.skipTest(f"Hermes not installed at {hermes_path}")
+
+        old_path = os.environ.get("PATH", "")
+        try:
+            os.environ["PATH"] = ""
+            result = Validator().verify("hermes-agent", TOOLS["hermes-agent"])
+        finally:
+            os.environ["PATH"] = old_path
+
+        self.assertTrue(result["success"], result)
+        self.assertIn("Hermes Agent", result["version"])
 
 
 if __name__ == "__main__":

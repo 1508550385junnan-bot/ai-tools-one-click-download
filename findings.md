@@ -30,3 +30,8 @@
 
 ## 范围外问题
 - 暂无。
+
+## v2.8 Hermes 补充发现
+- 本机 Hermes 实际安装路径为 `%LOCALAPPDATA%\Programs\Python\Python311\Scripts\hermes.exe`，v2.7 只覆盖了 `%APPDATA%\Python\Python311\Scripts` 和 `%LOCALAPPDATA%\Programs\Python\Python312\Scripts` 等路径，遗漏 LocalAppData Python 3.11 Scripts。
+- `python -m pip show hermes-agent` 和 `py -m pip show hermes-agent` 会查询当前默认 Python，不一定等于 Hermes 所在 Python；本机需要使用 `%LOCALAPPDATA%\Programs\Python\Python311\python.exe -m pip show hermes-agent` 才能看到 `0.14.0`。
+- `hermes version` 输出包含特殊符号，Windows 默认 GBK 解码会触发 `UnicodeDecodeError`，导致验证器把已安装误判为未安装；子进程读取需要固定 UTF-8 并用替换策略处理异常字符。
