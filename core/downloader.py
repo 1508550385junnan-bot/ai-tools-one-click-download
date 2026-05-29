@@ -4,6 +4,7 @@ import os
 import time
 import logging
 import urllib.request
+import urllib.error
 from config import DOWNLOAD_DIR, MAX_RETRIES, CHUNK_SIZE
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,11 @@ class Downloader:
         existing_size = 0
         if os.path.exists(dest):
             existing_size = os.path.getsize(dest)
+            if total_size > 0 and existing_size >= total_size:
+                logger.info(f"文件已存在且大小完整，跳过下载: {dest}")
+                if progress_callback:
+                    progress_callback(existing_size, total_size, 0)
+                return dest
 
         # 下载
         get_req = urllib.request.Request(url)
@@ -74,7 +80,19 @@ class Downloader:
         downloaded = existing_size
         last_callback = 0
 
-        with urllib.request.urlopen(get_req, timeout=300) as resp:
+        try:
+            resp_ctx = urllib.request.urlopen(get_req, timeout=300)
+        except urllib.error.HTTPError as e:
+            if e.code == 416 and os.path.exists(dest):
+                actual_size = os.path.getsize(dest)
+                if total_size == 0 or actual_size >= total_size:
+                    logger.info(f"服务器返回416，已有文件视为完整: {dest}")
+                    if progress_callback:
+                        progress_callback(actual_size, max(total_size, actual_size), 0)
+                    return dest
+            raise
+
+        with resp_ctx as resp:
             with open(dest, mode) as f:
                 while True:
                     chunk = resp.read(CHUNK_SIZE)

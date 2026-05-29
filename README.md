@@ -122,7 +122,7 @@ Pick App → Pick Provider → Paste API Key → One Click
 Checks GitHub Releases on startup. New version detected? Orange badge + popup. One click to download.
 
 ```
-[v2.4] [Check Update]  →  [v2.5 Available] [Check Update]
+[v2.5] [Check Update]  →  [v2.6 Available] [Check Update]
 ```
 
 ---

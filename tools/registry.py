@@ -22,10 +22,13 @@ TOOLS = {
         "install": {
             "type": "msi",
             "args": ["/quiet", "/norestart"],
+            "registry_display_names": ["CC Switch", "cc-switch"],
             "check_paths": [
                 os.path.expandvars("%ProgramFiles%\\CC Switch\\cc-switch.exe"),
                 os.path.expandvars("%ProgramFiles(x86)%\\CC Switch\\cc-switch.exe"),
                 os.path.expandvars("%LOCALAPPDATA%\\Programs\\CC Switch\\cc-switch.exe"),
+                os.path.expandvars("%LOCALAPPDATA%\\Programs\\cc-switch\\cc-switch.exe"),
+                os.path.expandvars("%LOCALAPPDATA%\\cc-switch\\cc-switch.exe"),
             ]
         },
         "verify": {

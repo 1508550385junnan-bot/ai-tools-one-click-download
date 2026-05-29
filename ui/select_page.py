@@ -6,6 +6,7 @@ from config import (
     SUCCESS_COLOR, WARNING_COLOR,
 )
 from tools.registry import TOOLS
+from core.version_utils import is_upgrade_available
 
 
 class ToolSelectPage(ctk.CTkFrame):
@@ -124,10 +125,10 @@ class ToolSelectPage(ctk.CTkFrame):
         if latest_ver is None:
             return "installed_latest", installed_ver
 
-        if installed_ver == latest_ver:
-            return "installed_latest", installed_ver
-        else:
+        if is_upgrade_available(installed_ver, latest_ver):
             return "upgrade_available", installed_ver
+        else:
+            return "installed_latest", installed_ver
 
     def _add_tool_card(self, parent, tool_key, tool):
         """添加工具卡片（v2.2: 按钮显示版本号）"""

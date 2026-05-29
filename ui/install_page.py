@@ -7,7 +7,7 @@ import customtkinter as ctk
 from config import (
     CARD_BG, TEXT_COLOR, TEXT_SECONDARY, ACCENT_COLOR,
     SUCCESS_COLOR, WARNING_COLOR, ERROR_COLOR,
-    DOWNLOAD_DIR
+    DOWNLOAD_DIR, APP_TITLE, APP_VERSION, APP_AUTHOR,
 )
 from tools.registry import TOOLS
 from core.downloader import Downloader
@@ -174,12 +174,13 @@ class InstallPage(ctk.CTkFrame):
             return
 
         w = self.step_widgets[index]
-        icons = {"running": "🔄", "ok": "✅", "error": "❌", "skip": "⏭️"}
+        icons = {"running": "🔄", "ok": "✅", "error": "❌", "skip": "⏭️", "warning": "⚠️"}
         colors = {
             "running": WARNING_COLOR,
             "ok": SUCCESS_COLOR,
             "error": ERROR_COLOR,
             "skip": TEXT_SECONDARY,
+            "warning": WARNING_COLOR,
         }
 
         w["icon"].configure(text=icons.get(status, "⏳"))
@@ -315,10 +316,10 @@ class InstallPage(ctk.CTkFrame):
         verify_cmds = []
         verify_cmds.append("@echo off")
         verify_cmds.append("chcp 65001 > nul")          # UTF-8 编码
-        verify_cmds.append("title AI工具一键下载 - 版本验证")
+        verify_cmds.append(f"title {APP_TITLE} - 版本验证")
         verify_cmds.append("echo ========================================")
-        verify_cmds.append("echo   AI 工具一键下载 v2.2 - 版本验证")
-        verify_cmds.append("echo   作者: 大虎子")
+        verify_cmds.append(f"echo   {APP_TITLE} v{APP_VERSION} - 版本验证")
+        verify_cmds.append(f"echo   作者: {APP_AUTHOR}")
         verify_cmds.append("echo ========================================")
         verify_cmds.append("echo.")
 

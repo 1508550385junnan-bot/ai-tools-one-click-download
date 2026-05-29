@@ -11,6 +11,51 @@ def _get_windows_file_version(filepath: str) -> str | None:
     """通过 Windows API 获取 exe/dll 文件的版本号。失败返回 None。"""
     if sys.platform != "win32":
         return None
+
+
+def _find_windows_uninstall_entry(display_names: list[str]) -> dict | None:
+    """从 Windows 卸载注册表中查找安装记录。"""
+    if sys.platform != "win32" or not display_names:
+        return None
+    try:
+        import winreg
+    except ImportError:
+        return None
+
+    roots = [
+        (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (winreg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (winreg.HKEY_LOCAL_MACHINE, r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
+    ]
+    wanted = [name.lower() for name in display_names]
+    for root, subkey in roots:
+        try:
+            with winreg.OpenKey(root, subkey) as parent:
+                for i in range(winreg.QueryInfoKey(parent)[0]):
+                    child_name = winreg.EnumKey(parent, i)
+                    try:
+                        with winreg.OpenKey(parent, child_name) as child:
+                            display = _reg_value(child, "DisplayName")
+                            if not display or display.lower() not in wanted:
+                                continue
+                            return {
+                                "display_name": display,
+                                "version": _reg_value(child, "DisplayVersion"),
+                                "install_location": _reg_value(child, "InstallLocation"),
+                            }
+                    except OSError:
+                        continue
+        except OSError:
+            continue
+    return None
+
+
+def _reg_value(key, name: str) -> str | None:
+    try:
+        value, _ = __import__("winreg").QueryValueEx(key, name)
+        return str(value) if value else None
+    except OSError:
+        return None
     try:
         import ctypes
         from ctypes import wintypes
@@ -80,11 +125,31 @@ class Validator:
         verify_config = tool_info.get("verify", {})
         method = verify_config.get("method", "exit_code_zero")
         command = verify_config.get("command")
-        check_paths = tool_info.get("install", {}).get("check_paths", [])
+        install_config = tool_info.get("install", {})
+        check_paths = install_config.get("check_paths", [])
 
         # 方法1: 文件存在性检查
         if method == "file_exists" or not command:
             self.callback(f"验证 {tool_info['name']}", "running", "检查安装文件...")
+            reg_entry = _find_windows_uninstall_entry(install_config.get("registry_display_names", []))
+            if reg_entry:
+                install_location = reg_entry.get("install_location")
+                exe_path = None
+                if install_location:
+                    candidate = os.path.join(os.path.expandvars(install_location), "cc-switch.exe")
+                    if os.path.exists(candidate):
+                        exe_path = candidate
+                version_str = reg_entry.get("version") or (
+                    _get_windows_file_version(exe_path) if exe_path else None
+                ) or "已安装"
+                self.callback(f"验证 {tool_info['name']}", "ok",
+                              f"注册表: {reg_entry['display_name']} (v{version_str})")
+                return {
+                    "success": True,
+                    "version": version_str,
+                    "error": None,
+                    "method": "registry",
+                }
             for p in check_paths:
                 expanded = os.path.expandvars(p)
                 if os.path.exists(expanded):

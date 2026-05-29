@@ -186,9 +186,11 @@ class Installer:
             result = subprocess.run(
                 cmd, capture_output=True, text=True, timeout=600
             )
-            ok = result.returncode == 0
+            ok = result.returncode in (0, 1641, 3010)
             if not ok:
                 logger.error(f"MSI安装失败 (exit={result.returncode}): stdout={result.stdout[:200]}, stderr={result.stderr[:200]}")
+            elif result.returncode in (1641, 3010):
+                logger.info(f"MSI安装成功但需要重启 (exit={result.returncode})")
             return ok
         except subprocess.TimeoutExpired:
             logger.error(f"MSI安装超时: {path}")

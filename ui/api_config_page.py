@@ -17,6 +17,7 @@ class APIConfigPage(ctk.CTkFrame):
         self.on_back = on_back
         self.selected_app = None     # claude-code / hermes-agent
         self.selected_provider = None
+        self.selected_model = None
         self._build_ui()
 
     def _build_ui(self):
@@ -157,9 +158,9 @@ class APIConfigPage(ctk.CTkFrame):
             justify="left",
         )
 
-        # === 步骤3: 输入 API Key ===
+        # === 步骤3: 输入模型、Base URL、API Key ===
         ctk.CTkLabel(
-            scroll, text="▎步骤 3: 输入 API Key 并一键配置",
+            scroll, text="▎步骤 3: 确认模型、Base URL 并一键配置",
             font=ctk.CTkFont(size=15, weight="bold"),
             text_color=ACCENT_COLOR,
         ).pack(anchor="w", pady=(25, 8))
@@ -169,6 +170,39 @@ class APIConfigPage(ctk.CTkFrame):
 
         key_inner = ctk.CTkFrame(key_frame, fg_color="transparent")
         key_inner.pack(padx=20, pady=15, fill="x")
+
+        ctk.CTkLabel(
+            key_inner, text="模型:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=TEXT_COLOR,
+        ).pack(anchor="w")
+
+        self.model_menu = ctk.CTkOptionMenu(
+            key_inner, values=["请先选择厂家"],
+            font=ctk.CTkFont(size=13),
+            fg_color="#0d1b2a",
+            button_color=ACCENT_COLOR,
+            button_hover_color="#0099cc",
+            text_color=TEXT_COLOR,
+            height=36,
+            command=self._select_model,
+        )
+        self.model_menu.pack(fill="x", pady=(8, 12))
+        self.model_menu.set("请先选择厂家")
+
+        ctk.CTkLabel(
+            key_inner, text="Base URL:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=TEXT_COLOR,
+        ).pack(anchor="w")
+
+        self.base_url_entry = ctk.CTkEntry(
+            key_inner, font=ctk.CTkFont(size=13),
+            fg_color="#0d1b2a", text_color=TEXT_COLOR,
+            border_color=ACCENT_COLOR, border_width=1,
+            height=38, placeholder_text="https://api.example.com/v1",
+        )
+        self.base_url_entry.pack(fill="x", pady=(8, 12))
 
         ctk.CTkLabel(
             key_inner, text="API Key:",
@@ -247,11 +281,22 @@ class APIConfigPage(ctk.CTkFrame):
         card.configure(border_color=ACCENT_COLOR)
         btn.configure(fg_color=ACCENT_COLOR, text_color="#0a0a1a")
         self.selected_provider = prov_key
+        provider = PROVIDERS[prov_key]
+        models = provider.get("models", ["custom-model"])
+        self.selected_model = models[0]
+        self.model_menu.configure(values=models)
+        self.model_menu.set(models[0])
+
+        if self.selected_app == "claude-code":
+            base_url = provider.get("claude_base_url") or provider.get("base_url") or ""
+        else:
+            base_url = provider.get("base_url") or ""
+        self.base_url_entry.delete(0, "end")
+        self.base_url_entry.insert(0, base_url)
         self.update()
 
         # Claude Code + 非 Anthropic → relay 提示
         if self.selected_app == "claude-code" and prov_key != "anthropic":
-            provider = PROVIDERS[prov_key]
             if provider["claude_compat"]:
                 # 已验证有 Anthropic 端点
                 self.compat_warning.configure(
@@ -264,7 +309,11 @@ class APIConfigPage(ctk.CTkFrame):
                          f"   BASE_URL 已设为 {provider['base_url']}\n"
                          "   若直连不通，请填入 relay 服务地址。",
                 )
-            self.compat_warning.pack(anchor="w", pady=(10, 0))
+                self.compat_warning.pack(anchor="w", pady=(10, 0))
+
+    def _select_model(self, model):
+        """选择模型"""
+        self.selected_model = model
 
     def _on_configure(self):
         """执行配置"""
@@ -280,13 +329,14 @@ class APIConfigPage(ctk.CTkFrame):
             self._show_status("请输入 API Key（步骤3）", WARNING_COLOR)
             return
 
-        model = None  # 自动选择该厂家第一个模型
+        model = self.selected_model
+        base_url = self.base_url_entry.get().strip()
 
         self.config_btn.configure(state="disabled", text="配置中...")
         self._show_status("正在配置，请稍候...", WARNING_COLOR)
 
         def _do():
-            result = try_configure(self.selected_app, self.selected_provider, api_key, model)
+            result = try_configure(self.selected_app, self.selected_provider, api_key, model, base_url)
             self.after(0, lambda: self._on_result(result))
 
         threading.Thread(target=_do, daemon=True).start()
@@ -304,7 +354,8 @@ class APIConfigPage(ctk.CTkFrame):
     def _run_api_test(self):
         """后台测试 API 连接"""
         api_key = self.api_key_entry.get().strip()
-        model = None  # 自动选择该厂家第一个模型
+        model = self.selected_model
+        base_url = self.base_url_entry.get().strip()
         prov_key = self.selected_provider
 
         self._show_status(
@@ -313,7 +364,7 @@ class APIConfigPage(ctk.CTkFrame):
         )
 
         def _do():
-            result = test_api_connection(prov_key, api_key, model)
+            result = test_api_connection(prov_key, api_key, model, base_url)
             self.after(0, lambda: self._on_test_result(result))
 
         threading.Thread(target=_do, daemon=True).start()

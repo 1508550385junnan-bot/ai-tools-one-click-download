@@ -1,8 +1,7 @@
-# main.py - AI工具一键下载 v2.2 入口
-# 作者: 大虎子 | 版本: 2.2
+# main.py - AI工具一键下载入口
 """
 ============================================================
-  AI 工具一键下载 v2.2
+  AI 工具一键下载
   一键安装 CC Switch、Python、VS Code、
   Codex CLI、Claude Code、Hermes Agent
 ============================================================
@@ -323,15 +322,17 @@ def show_splash_and_init():
 
     # splash 的 mainloop 已退出，现在安全启动主窗口
     from ui.main_window import MainWindow
-    logger.info("启动AI工具一键下载 v2.2")
+    logger.info(f"启动{APP_TITLE} v{APP_VERSION}")
     app = MainWindow(installed_versions=detected_versions)
     app.run()
 
 
 def main():
     """主入口"""
+    from config import APP_TITLE, APP_VERSION
+
     logger.info("=" * 50)
-    logger.info("AI 工具一键下载 v2.2 启动")
+    logger.info(f"{APP_TITLE} v{APP_VERSION} 启动")
     
     # 检查管理员权限
     request_admin()

@@ -4,11 +4,12 @@
 import subprocess
 import sys
 import os
+from config import APP_TITLE, APP_VERSION
 
 def build():
     """打包为单个 EXE 文件"""
     print("=" * 60)
-    print("  AI 工具一键下载 v2.0 - 打包构建")
+    print(f"  {APP_TITLE} v{APP_VERSION} - 打包构建")
     print("=" * 60)
 
     # PyInstaller 参数
@@ -16,7 +17,7 @@ def build():
         sys.executable, "-m", "PyInstaller",
         "--onefile",                    # 单文件
         "--windowed",                   # 无控制台窗口
-        "--name", "AI工具一键下载",
+        "--name", APP_TITLE.replace(" ", ""),
         "--add-data", f"config.py{os.pathsep}.",          # 配置文件
         "--add-data", f"assets{os.pathsep}assets",         # 赞助图片等资源
         "--add-data", f"tools{os.pathsep}tools",
@@ -39,7 +40,7 @@ def build():
     if result.returncode == 0:
         print("\n" + "=" * 60)
         print("  构建成功!")
-        print(f"  输出: dist/AI工具一键下载.exe")
+        print(f"  输出: dist/{APP_TITLE.replace(' ', '')}.exe")
         print("=" * 60)
     else:
         print("\n构建失败，请检查错误信息")

@@ -1,4 +1,5 @@
-# requirements.txt - AI工具一键下载 v2.0 依赖清单
+# requirements.txt - AI tools installer dependencies
 customtkinter>=5.2.0
 Pillow>=10.0
 pyinstaller>=6.0
+PyYAML>=6.0
