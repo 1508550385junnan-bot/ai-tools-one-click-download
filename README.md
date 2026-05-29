@@ -1,8 +1,8 @@
 <p align="center">
   <img src="https://img.shields.io/github/v/release/1508550385junnan-bot/ai-tools-one-click-download?color=00d4ff&label=version" alt="version">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2B-lightgrey" alt="platform">
-  <img src="https://img.shields.io/badge/size-19MB-blue" alt="size">
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="license">
+  <img src="https://img.shields.io/badge/size-30MB-blue" alt="size">
+  <img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="license">
   <img src="https://img.shields.io/github/downloads/1508550385junnan-bot/ai-tools-one-click-download/total" alt="downloads">
   <img src="https://img.shields.io/github/stars/1508550385junnan-bot/ai-tools-one-click-download?style=social" alt="stars">
 </p>
@@ -60,7 +60,7 @@ Setting up an AI development environment on Windows sucks. You need Python, VS C
 
 Grab `AI工具一键下载.exe` from [Releases](https://github.com/1508550385junnan-bot/ai-tools-one-click-download/releases/latest) and double-click.
 
-**No Python required. No dependencies. 19MB single file. Just works.**
+**No Python required. No dependencies. 30MB single file. Just works.**
 
 ### Option 2: Run from Source
 
@@ -174,7 +174,7 @@ Run `python build.py` to repackage.
 
 ## 📄 License
 
-MIT © 大虎子 (DaHuzi)
+GPL-3.0 © 大虎子 (DaHuzi)
 
 ---
 
