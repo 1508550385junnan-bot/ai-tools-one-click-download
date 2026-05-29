@@ -20,4 +20,6 @@
 - 打包依赖安装复测发现 `requirements.txt` 中文注释导致 Windows pip GBK 解码失败，已改为 ASCII 注释。
 - 已升级应用版本到 v2.6，并更新 `version.json` changelog 与 README 更新示例。
 - 已运行依赖安装、unittest、compileall、pip-audit，均通过。
-- 已运行 `python build.py`，产物为 `dist/AI工具一键下载.exe`。
+- 已运行 `python build.py`，初始产物为 `dist/AI工具一键下载.exe`。
+- 已根据 GitHub Release asset 会清洗非 ASCII 文件名的规则，将发布资产名、打包输出和在线更新下载地址统一为 `AI.exe`。
+- 已重新打包生成 `dist/AI.exe`，SHA256 为 `2DCF87749F6A2BEFCE516E5E3A32CA5160BC79465155C2B1F8CDCB84070960DD`。

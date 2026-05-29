@@ -16,7 +16,7 @@ SPONSOR_BUTTON_TEXT = "已赞助，继续下载"
 
 # --- 版本更新检查 ---
 # 远程版本信息 JSON URL（留空则不检查更新）
-# 格式: {"version": "2.6", "download_url": "https://xxx.com/AI工具一键下载.exe", "changelog": "更新内容..."}
+# 格式: {"version": "2.6", "download_url": "https://xxx.com/AI.exe", "changelog": "更新内容..."}
 # 你可以把 version.json 放在 GitHub Releases 或你自己的服务器上
 UPDATE_CHECK_URL = "https://raw.githubusercontent.com/1508550385junnan-bot/ai-tools-one-click-download/main/version.json"
 
@@ -28,6 +28,7 @@ CHUNK_SIZE = 8192                  # 下载分块大小
 # --- UI相关 ---
 APP_TITLE = "AI 工具一键下载"
 APP_VERSION = "2.6"
+APP_EXE_BASENAME = "AI"
 APP_AUTHOR = "大虎子"
 WINDOW_WIDTH = 900
 WINDOW_HEIGHT = 680

@@ -21,6 +21,7 @@
 - GitHub Releases API 访问被当前出口 IP 限流，不能作为安装器运行时唯一依赖；代码应支持静态 URL，并在下载失败时给出明确 HTTP 错误。
 - PyInstaller 官方文档：Windows GUI 单文件应用可使用 `--onefile --windowed`，资源通过 `--add-data` 纳入，间接依赖可用 `--hidden-import` 显式声明。来源：https://pyinstaller.org/en/stable/usage.html
 - GitHub CLI Release 文档：Release 可附加本地构建产物作为 asset；本机未安装 `gh`，发布产物上传需要改用已有 git 凭据之外的 Release 上传方式或后续安装/配置 `gh`。来源：https://cli.github.com/manual/gh_release_create
+- GitHub Release assets 官方文档：上传资产时 GitHub 会重命名包含特殊字符、非字母数字字符或首尾句点的文件名，最终应以 List release assets 返回的文件名为准；因此发布资产名改为 ASCII 的 `AI.exe`。来源：https://docs.github.com/en/rest/releases/assets
 
 ## 范围外问题
 - 暂无。

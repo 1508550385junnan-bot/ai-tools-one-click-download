@@ -1,5 +1,5 @@
 {
   "version": "2.6",
-  "download_url": "https://github.com/1508550385junnan-bot/ai-tools-one-click-download/releases/latest/download/AI工具一键下载.exe",
+  "download_url": "https://github.com/1508550385junnan-bot/ai-tools-one-click-download/releases/latest/download/AI.exe",
   "changelog": "v2.6 更新：\n- 完全重改 API 配置逻辑，修复 Claude Code / Hermes Agent 写入与测试流程\n- 修复 DeepSeek Claude Code Anthropic 端点和模型环境变量配置\n- 修复 401/403 被误判为连接成功的问题\n- 修复 CC Switch MSI 安装成功返回码 3010/1641 被误报失败\n- 支持通过注册表读取 CC Switch 版本并正确显示已安装/可升级状态\n- 修复完整安装包重复续传导致的下载失败\n- 改用数字版本比较，避免 3.9 与 3.10 等版本误判\n- 统一应用内版本、构建输出和在线更新文件"
 }

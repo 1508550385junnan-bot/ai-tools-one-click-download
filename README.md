@@ -58,7 +58,7 @@ Setting up an AI development environment on Windows sucks. You need Python, VS C
 
 ### Option 1: Download EXE (Recommended)
 
-Grab `AI工具一键下载.exe` from [Releases](https://github.com/1508550385junnan-bot/ai-tools-one-click-download/releases/latest) and double-click.
+Grab `AI.exe` from [Releases](https://github.com/1508550385junnan-bot/ai-tools-one-click-download/releases/latest) and double-click.
 
 **No Python required. No dependencies. 30MB single file. Just works.**
 
