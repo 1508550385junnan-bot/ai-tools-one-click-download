@@ -203,9 +203,11 @@ class Installer:
         """通过 npm install -g 安装"""
         try:
             self._log_cmd(command)
+            from core.validator import Validator
             result = subprocess.run(
                 command, shell=True,
-                capture_output=True, text=True, timeout=300
+                capture_output=True, text=True, timeout=300,
+                env={**os.environ, "PATH": Validator._get_extended_path()}
             )
             return result.returncode == 0
         except Exception as e:
@@ -216,9 +218,11 @@ class Installer:
         """通过 pip install 安装"""
         try:
             self._log_cmd(command)
+            from core.validator import Validator
             result = subprocess.run(
                 command, shell=True,
-                capture_output=True, text=True, timeout=300
+                capture_output=True, text=True, timeout=300,
+                env={**os.environ, "PATH": Validator._get_extended_path()}
             )
             return result.returncode == 0
         except Exception as e:

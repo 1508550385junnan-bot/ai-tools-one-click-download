@@ -3,6 +3,7 @@ import os
 import sys
 import subprocess
 import logging
+import shlex
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,52 @@ def _get_windows_file_version(filepath: str) -> str | None:
     """通过 Windows API 获取 exe/dll 文件的版本号。失败返回 None。"""
     if sys.platform != "win32":
         return None
+    try:
+        import ctypes
+        from ctypes import wintypes
 
+        ver = ctypes.windll.version
+        size = ver.GetFileVersionInfoSizeW(filepath, None)
+        if not size:
+            return None
+
+        buf = ctypes.create_string_buffer(size)
+        if not ver.GetFileVersionInfoW(filepath, 0, size, buf):
+            return None
+
+        ptr = ctypes.c_void_p()
+        ptr_size = wintypes.UINT()
+        if not ver.VerQueryValueW(buf, "\\", ctypes.byref(ptr), ctypes.byref(ptr_size)):
+            return None
+        if ptr_size.value < 52:
+            return None
+
+        class VS_FIXEDFILEINFO(ctypes.Structure):
+            _fields_ = [
+                ("dwSignature", wintypes.DWORD),
+                ("dwStrucVersion", wintypes.DWORD),
+                ("dwFileVersionMS", wintypes.DWORD),
+                ("dwFileVersionLS", wintypes.DWORD),
+                ("dwProductVersionMS", wintypes.DWORD),
+                ("dwProductVersionLS", wintypes.DWORD),
+                ("dwFileFlagsMask", wintypes.DWORD),
+                ("dwFileFlags", wintypes.DWORD),
+                ("dwFileOS", wintypes.DWORD),
+                ("dwFileType", wintypes.DWORD),
+                ("dwFileSubtype", wintypes.DWORD),
+                ("dwFileDateMS", wintypes.DWORD),
+                ("dwFileDateLS", wintypes.DWORD),
+            ]
+
+        info = ctypes.cast(ptr, ctypes.POINTER(VS_FIXEDFILEINFO)).contents
+        major = info.dwFileVersionMS >> 16
+        minor = info.dwFileVersionMS & 0xFFFF
+        build = info.dwFileVersionLS >> 16
+        rev = info.dwFileVersionLS & 0xFFFF
+        return f"{major}.{minor}.{build}.{rev}"
+    except Exception as e:
+        logger.debug(f"获取文件版本失败: {e}")
+        return None
 
 def _find_windows_uninstall_entry(display_names: list[str]) -> dict | None:
     """从 Windows 卸载注册表中查找安装记录。"""
@@ -56,59 +102,23 @@ def _reg_value(key, name: str) -> str | None:
         return str(value) if value else None
     except OSError:
         return None
-    try:
-        import ctypes
-        from ctypes import wintypes
 
-        ver = ctypes.windll.version
 
-        # 获取版本信息大小
-        size = ver.GetFileVersionInfoSizeW(filepath, None)
-        if not size:
-            return None
+def _existing_paths(paths: list[str]) -> list[str]:
+    found = []
+    for path in paths:
+        expanded = os.path.expandvars(path)
+        if os.path.exists(expanded):
+            found.append(expanded)
+    return found
 
-        # 读取版本信息
-        buf = ctypes.create_string_buffer(size)
-        if not ver.GetFileVersionInfoW(filepath, 0, size, buf):
-            return None
 
-        # 查询根版本块
-        ptr = ctypes.c_void_p()
-        ptr_size = wintypes.UINT()
-        if not ver.VerQueryValueW(buf, "\\", ctypes.byref(ptr), ctypes.byref(ptr_size)):
-            return None
-
-        if ptr_size.value < 52:
-            return None
-
-        # 解析 VS_FIXEDFILEINFO
-        class VS_FIXEDFILEINFO(ctypes.Structure):
-            _fields_ = [
-                ("dwSignature", wintypes.DWORD),
-                ("dwStrucVersion", wintypes.DWORD),
-                ("dwFileVersionMS", wintypes.DWORD),
-                ("dwFileVersionLS", wintypes.DWORD),
-                ("dwProductVersionMS", wintypes.DWORD),
-                ("dwProductVersionLS", wintypes.DWORD),
-                ("dwFileFlagsMask", wintypes.DWORD),
-                ("dwFileFlags", wintypes.DWORD),
-                ("dwFileOS", wintypes.DWORD),
-                ("dwFileType", wintypes.DWORD),
-                ("dwFileSubtype", wintypes.DWORD),
-                ("dwFileDateMS", wintypes.DWORD),
-                ("dwFileDateLS", wintypes.DWORD),
-            ]
-
-        info = ctypes.cast(ptr, ctypes.POINTER(VS_FIXEDFILEINFO)).contents
-        major = info.dwFileVersionMS >> 16
-        minor = info.dwFileVersionMS & 0xFFFF
-        build = info.dwFileVersionLS >> 16
-        rev = info.dwFileVersionLS & 0xFFFF
-
-        return f"{major}.{minor}.{build}.{rev}"
-    except Exception as e:
-        logger.debug(f"获取文件版本失败: {e}")
-        return None
+def _command_with_executable(command: str, executable: str) -> str:
+    parts = shlex.split(command, posix=False)
+    args = parts[1:] if len(parts) > 1 else []
+    quoted_exe = subprocess.list2cmdline([executable])
+    quoted_args = subprocess.list2cmdline(args) if args else ""
+    return f"{quoted_exe} {quoted_args}".strip()
 
 
 class Validator:
@@ -176,51 +186,7 @@ class Validator:
         elif method == "exit_code_zero":
             self.callback(f"验证 {tool_info['name']}", "running",
                           f"执行: {command}")
-            try:
-                result = subprocess.run(
-                    command, shell=True,
-                    capture_output=True, text=True, timeout=30,
-                    env={**os.environ, "PATH": self._get_extended_path()}
-                )
-                version_output = (
-                    result.stdout.strip() or result.stderr.strip()
-                )
-
-                if result.returncode == 0:
-                    self.callback(f"验证 {tool_info['name']}", "ok",
-                                  f"版本: {version_output[:60]}")
-                    return {
-                        "success": True,
-                        "version": version_output,
-                        "error": None,
-                        "method": "exit_code_zero",
-                    }
-                else:
-                    self.callback(f"验证 {tool_info['name']}", "error",
-                                  f"命令返回失败: {version_output[:60]}")
-                    return {
-                        "success": False,
-                        "version": version_output,
-                        "error": f"exit code {result.returncode}",
-                        "method": "exit_code_zero",
-                    }
-            except FileNotFoundError:
-                self.callback(f"验证 {tool_info['name']}", "error",
-                              "命令未找到，可能需要重启终端")
-                return {
-                    "success": False,
-                    "version": None,
-                    "error": "命令未找到（PATH未生效？）",
-                    "method": "exit_code_zero",
-                }
-            except Exception as e:
-                self.callback(f"验证 {tool_info['name']}", "error", str(e))
-                return {
-                    "success": False,
-                    "version": None,
-                    "error": str(e),
-                    "method": "exit_code_zero",
-                }
+            return self._run_version_command(tool_info["name"], command, check_paths)
 
         # 方法3: 包含特定版本号
         elif method == "version_contains":
@@ -231,7 +197,7 @@ class Validator:
                 result = subprocess.run(
                     command, shell=True,
                     capture_output=True, text=True, timeout=30,
-                    env={**os.environ, "PATH": self._get_extended_path()}
+                    env={**os.environ, "PATH": self._get_extended_path(check_paths)}
                 )
                 version_output = (
                     result.stdout.strip() or result.stderr.strip()
@@ -262,8 +228,50 @@ class Validator:
 
         return {"success": False, "version": None, "error": "未知验证方法", "method": method}
 
+    def _run_version_command(self, tool_name: str, command: str, check_paths: list[str]) -> dict:
+        commands = [command]
+        for executable in _existing_paths(check_paths):
+            fallback = _command_with_executable(command, executable)
+            if fallback not in commands:
+                commands.append(fallback)
+
+        last_output = None
+        last_error = None
+        for candidate in commands:
+            try:
+                result = subprocess.run(
+                    candidate, shell=True,
+                    capture_output=True, text=True, timeout=30,
+                    env={**os.environ, "PATH": self._get_extended_path(check_paths)}
+                )
+                version_output = result.stdout.strip() or result.stderr.strip()
+                last_output = version_output
+                if result.returncode == 0:
+                    self.callback(f"验证 {tool_name}", "ok",
+                                  f"版本: {version_output[:60]}")
+                    return {
+                        "success": True,
+                        "version": version_output or "已安装",
+                        "error": None,
+                        "method": "exit_code_zero",
+                    }
+                last_error = f"exit code {result.returncode}"
+            except FileNotFoundError:
+                last_error = "命令未找到（PATH未生效？）"
+            except Exception as e:
+                last_error = str(e)
+
+        self.callback(f"验证 {tool_name}", "error",
+                      f"命令返回失败: {(last_output or last_error or '')[:60]}")
+        return {
+            "success": False,
+            "version": last_output,
+            "error": last_error,
+            "method": "exit_code_zero",
+        }
+
     @staticmethod
-    def _get_extended_path() -> str:
+    def _get_extended_path(check_paths: list[str] | None = None) -> str:
         """扩展PATH，包含常见安装路径"""
         paths = [os.environ.get("PATH", "")]
         extras = [
@@ -272,12 +280,21 @@ class Validator:
             os.path.expandvars("%APPDATA%\\npm"),
             os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python312"),
             os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python312\\Scripts"),
+            os.path.expandvars("%APPDATA%\\Python\\Python313\\Scripts"),
+            os.path.expandvars("%APPDATA%\\Python\\Python312\\Scripts"),
+            os.path.expandvars("%APPDATA%\\Python\\Python311\\Scripts"),
+            os.path.expandvars("%APPDATA%\\Python\\Python310\\Scripts"),
             os.path.expandvars("%ProgramFiles%\\Python312"),
             os.path.expandvars("%ProgramFiles%\\Python312\\Scripts"),
             os.path.expandvars("%ProgramFiles%\\Git\\bin"),
             os.path.expandvars("%ProgramFiles%\\Git\\cmd"),
             os.path.expandvars("%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\bin"),
         ]
+        for path in check_paths or []:
+            expanded = os.path.expandvars(path)
+            parent = os.path.dirname(expanded)
+            if parent:
+                extras.append(parent)
         for p in extras:
             if os.path.isdir(p):
                 paths.append(p)

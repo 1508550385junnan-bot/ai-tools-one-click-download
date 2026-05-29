@@ -4,6 +4,7 @@ import threading
 import urllib.request
 import json
 import customtkinter as ctk
+from core.app_update import normalize_update_info
 from config import (
     APP_TITLE, APP_VERSION, APP_AUTHOR,
     WINDOW_WIDTH, WINDOW_HEIGHT,
@@ -60,6 +61,7 @@ class MainWindow(ctk.CTk):
 
         # 后台检查更新
         self._check_update_async()
+        self._check_tool_latest_versions_async()
 
     def _init_pages(self):
         """初始化所有页面"""
@@ -162,12 +164,25 @@ class MainWindow(ctk.CTk):
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-                remote_ver = data.get("version", "")
-                if remote_ver and remote_ver != APP_VERSION:
-                    return data
+                return normalize_update_info(data, APP_VERSION)
         except Exception:
             pass
         return None
+
+    def _check_tool_latest_versions_async(self):
+        """后台检查各 AI 工具远程最新版本，刷新升级按钮。"""
+        def _do():
+            try:
+                from tools.registry import TOOLS
+                from core.latest_versions import resolve_latest_versions
+
+                versions = resolve_latest_versions(TOOLS)
+                if versions and "select" in self.pages:
+                    self.after(0, lambda: self.pages["select"].apply_latest_versions(versions))
+            except Exception:
+                pass
+
+        threading.Thread(target=_do, daemon=True).start()
 
     def _show_update_badge(self):
         """显示更新提示"""
@@ -288,7 +303,7 @@ class MainWindow(ctk.CTk):
         def _do():
             try:
                 info = self._fetch_update_info()
-                if info and info.get("version") != APP_VERSION:
+                if info:
                     self._update_available = info
                     self.after(0, self._show_update_badge)
                 else:

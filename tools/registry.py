@@ -11,6 +11,10 @@ TOOLS = {
         "icon": "🔄",
         "category": "工具",
         "latest_version": "3.15.0",
+        "latest": {
+            "type": "github_release",
+            "repo": "farion1231/cc-switch"
+        },
         "downloads": [
             {
                 "os": "windows",
@@ -117,6 +121,10 @@ TOOLS = {
         "icon": "🤖",
         "category": "AI编程",
         "latest_version": None,
+        "latest": {
+            "type": "npm",
+            "package": "@openai/codex"
+        },
         "downloads": [],  # npm 安装，无需下载
         "install": {
             "type": "npm",
@@ -141,6 +149,10 @@ TOOLS = {
         "icon": "🧠",
         "category": "AI编程",
         "latest_version": None,
+        "latest": {
+            "type": "npm",
+            "package": "@anthropic-ai/claude-code"
+        },
         "downloads": [],  # npm 安装，无需下载
         "install": {
             "type": "npm",
@@ -165,12 +177,25 @@ TOOLS = {
         "icon": "⚡",
         "category": "AI编程",
         "latest_version": None,
+        "latest": {
+            "type": "pypi",
+            "package": "hermes-agent"
+        },
         "downloads": [],  # pip 安装，无需下载
         "install": {
             "type": "pip",
             "command": "pip install hermes-agent",
             "check_paths": [
+                os.path.expandvars("%APPDATA%\\Python\\Python313\\Scripts\\hermes.exe"),
+                os.path.expandvars("%APPDATA%\\Python\\Python313\\Scripts\\hermes.cmd"),
+                os.path.expandvars("%APPDATA%\\Python\\Python312\\Scripts\\hermes.exe"),
+                os.path.expandvars("%APPDATA%\\Python\\Python312\\Scripts\\hermes.cmd"),
+                os.path.expandvars("%APPDATA%\\Python\\Python311\\Scripts\\hermes.exe"),
+                os.path.expandvars("%APPDATA%\\Python\\Python311\\Scripts\\hermes.cmd"),
+                os.path.expandvars("%APPDATA%\\Python\\Python310\\Scripts\\hermes.exe"),
+                os.path.expandvars("%APPDATA%\\Python\\Python310\\Scripts\\hermes.cmd"),
                 os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python312\\Scripts\\hermes.exe"),
+                os.path.expandvars("%LOCALAPPDATA%\\Programs\\Python\\Python312\\Scripts\\hermes.cmd"),
                 os.path.expandvars("%APPDATA%\\Python\\Python312\\Scripts\\hermes.exe"),
             ]
         },
@@ -180,6 +205,35 @@ TOOLS = {
             "method": "exit_code_zero"
         },
         "prerequisites": ["python3", "git"]
+    },
+
+    "openclaw": {
+        "name": "OpenClaw",
+        "name_cn": "OpenClaw AI 编程助手",
+        "description": "OpenClaw 官方命令行 AI 编程工具，\n通过 npm 全局安装，安装后可在终端使用 openclaw 命令。",
+        "icon": "🛠️",
+        "category": "AI编程",
+        "latest_version": None,
+        "latest": {
+            "type": "npm",
+            "package": "openclaw"
+        },
+        "downloads": [],  # npm 安装，无需下载
+        "install": {
+            "type": "npm",
+            "command": "npm install -g openclaw",
+            "check_paths": [
+                os.path.expandvars("%APPDATA%\\npm\\openclaw.cmd"),
+                os.path.expandvars("%APPDATA%\\npm\\openclaw.ps1"),
+                os.path.expandvars("%ProgramFiles%\\nodejs\\openclaw.cmd"),
+            ]
+        },
+        "verify": {
+            "command": "openclaw --version",
+            "expected": None,
+            "method": "exit_code_zero"
+        },
+        "prerequisites": ["nodejs", "git"]
     },
 }
 

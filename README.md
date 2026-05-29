@@ -25,7 +25,7 @@
 
 ## 💡 The Problem & The Solution
 
-Setting up an AI development environment on Windows sucks. You need Python, VS Code, Node.js, Git, Claude Code, Codex CLI, Hermes Agent... Each one has its own installer, its own quirks, its own StackOverflow rabbit hole.
+Setting up an AI development environment on Windows sucks. You need Python, VS Code, Node.js, Git, Claude Code, Codex CLI, Hermes Agent, OpenClaw... Each one has its own installer, its own quirks, its own StackOverflow rabbit hole.
 
 **This tool reduces hours of setup to 3 clicks.**
 
@@ -50,6 +50,7 @@ Setting up an AI development environment on Windows sucks. You need Python, VS C
 | 🧠 **Claude Code** | Anthropic's CLI AI coding tool | npm one-liner |
 | 🤖 **Codex CLI** | OpenAI's CLI AI assistant | npm one-liner |
 | ⚡ **Hermes Agent** | Nous Research AI agent | pip one-liner |
+| 🛠️ **OpenClaw** | OpenClaw AI coding assistant | npm one-liner |
 | 🔄 **CC Switch** | Claude Code config manager | MSI silent install |
 
 ---
@@ -122,7 +123,7 @@ Pick App → Pick Provider → Paste API Key → One Click
 Checks GitHub Releases on startup. New version detected? Orange badge + popup. One click to download.
 
 ```
-[v2.5] [Check Update]  →  [v2.6 Available] [Check Update]
+[v2.6] [Check Update]  →  [v2.7 Available] [Check Update]
 ```
 
 ---

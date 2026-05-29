@@ -12,7 +12,11 @@ from core.api_configurator import (
 )
 from core.downloader import Downloader
 from core.installer import Installer
+from core.app_update import normalize_update_info
+from core.latest_versions import resolve_latest_version
 from core.version_utils import is_upgrade_available, normalize_version
+from core.validator import Validator
+from tools.registry import TOOLS
 
 
 class APIConfiguratorTests(unittest.TestCase):
@@ -89,6 +93,33 @@ class VersionUtilsTests(unittest.TestCase):
         self.assertFalse(is_upgrade_available("3.15.0.0", "3.15.0"))
         self.assertFalse(is_upgrade_available("已安装", "3.15.0"))
 
+    def test_app_update_only_accepts_newer_remote_version(self):
+        remote = {"version": "2.7", "download_url": "https://example.com/AI.exe"}
+
+        self.assertEqual(normalize_update_info(remote, "2.6"), remote)
+        self.assertIsNone(normalize_update_info({"version": "2.6"}, "2.6"))
+        self.assertIsNone(normalize_update_info({"version": "2.5"}, "2.6"))
+        self.assertIsNone(normalize_update_info({"version": ""}, "2.6"))
+
+    def test_latest_version_resolver_reads_npm_latest(self):
+        payload = mock.Mock()
+        payload.__enter__ = mock.Mock(return_value=payload)
+        payload.__exit__ = mock.Mock(return_value=False)
+        payload.read.return_value = b'{"version":"2026.5.27"}'
+
+        with mock.patch("urllib.request.urlopen", return_value=payload) as mocked:
+            version = resolve_latest_version({"latest": {"type": "npm", "package": "openclaw"}})
+
+        self.assertEqual(version, "2026.5.27")
+        self.assertIn("registry.npmjs.org/openclaw/latest", mocked.call_args[0][0].full_url)
+
+    def test_openclaw_registry_uses_official_npm_command(self):
+        tool = TOOLS["openclaw"]
+
+        self.assertEqual(tool["install"]["type"], "npm")
+        self.assertEqual(tool["install"]["command"], "npm install -g openclaw")
+        self.assertEqual(tool["verify"]["command"], "openclaw --version")
+
 
 class InstallerBehaviorTests(unittest.TestCase):
     def test_downloader_skips_complete_existing_file(self):
@@ -119,6 +150,29 @@ class InstallerBehaviorTests(unittest.TestCase):
         completed = mock.Mock(returncode=3010, stdout="", stderr="")
         with mock.patch("subprocess.run", return_value=completed):
             self.assertTrue(Installer()._install_msi("package.msi", ["/quiet"]))
+
+    def test_validator_falls_back_to_existing_check_path_for_cli(self):
+        if os.name != "nt":
+            self.skipTest("Windows cmd fallback test")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            script = os.path.join(tmp, "hermes.cmd")
+            with open(script, "w", encoding="utf-8") as f:
+                f.write("@echo off\r\necho Hermes Agent v0.15.1\r\n")
+
+            tool = {
+                "name": "Hermes Agent",
+                "install": {"check_paths": [script]},
+                "verify": {
+                    "command": "missing-hermes-command version",
+                    "method": "exit_code_zero",
+                },
+            }
+
+            result = Validator().verify("hermes-agent", tool)
+
+        self.assertTrue(result["success"], result)
+        self.assertIn("0.15.1", result["version"])
 
 
 if __name__ == "__main__":

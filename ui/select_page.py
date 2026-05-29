@@ -18,8 +18,10 @@ class ToolSelectPage(ctk.CTkFrame):
         self.on_install = on_install
         self.on_single_install = on_single_install
         self.installed_versions = installed_versions or {}
+        self.latest_versions = {}
         self.tool_vars = {}
         self.tool_buttons = {}
+        self.tool_desc_labels = {}
         self._build_ui()
 
     def _build_ui(self):
@@ -121,7 +123,7 @@ class ToolSelectPage(ctk.CTkFrame):
         if installed_ver is None:
             return "not_installed", None
 
-        latest_ver = tool.get("latest_version")
+        latest_ver = self._get_latest_version(tool_key, tool)
         if latest_ver is None:
             return "installed_latest", installed_ver
 
@@ -133,7 +135,7 @@ class ToolSelectPage(ctk.CTkFrame):
     def _add_tool_card(self, parent, tool_key, tool):
         """添加工具卡片（v2.2: 按钮显示版本号）"""
         status, installed_ver = self._get_tool_status(tool_key, tool)
-        latest_ver = tool.get("latest_version")
+        latest_ver = self._get_latest_version(tool_key, tool)
 
         card = ctk.CTkFrame(
             parent, fg_color=CARD_BG,
@@ -174,18 +176,15 @@ class ToolSelectPage(ctk.CTkFrame):
         ).pack(anchor="w")
 
         # 描述 + 版本状态
-        desc_text = tool["description"]
-        if status == "installed_latest":
-            desc_text += f"\n✅ 已安装最新版: {installed_ver}"
-        elif status == "upgrade_available":
-            desc_text += f"\n⚠️ 当前: {installed_ver} → 可升级: {latest_ver}"
-
-        ctk.CTkLabel(
+        desc_text = self._build_description(tool_key, tool, status, installed_ver)
+        desc_label = ctk.CTkLabel(
             mid, text=desc_text,
             font=ctk.CTkFont(size=12),
             text_color=TEXT_SECONDARY,
             justify="left",
-        ).pack(anchor="w", pady=(4, 0))
+        )
+        desc_label.pack(anchor="w", pady=(4, 0))
+        self.tool_desc_labels[tool_key] = desc_label
 
         # 右侧: 按钮（带版本号）
         right = ctk.CTkFrame(card, fg_color="transparent")
@@ -225,6 +224,23 @@ class ToolSelectPage(ctk.CTkFrame):
         action_btn.pack()
         self.tool_buttons[tool_key] = action_btn
 
+    def _get_latest_version(self, tool_key, tool):
+        return self.latest_versions.get(tool_key) or tool.get("latest_version")
+
+    def _build_description(self, tool_key, tool, status, installed_ver):
+        latest_ver = self._get_latest_version(tool_key, tool)
+        desc_text = tool["description"]
+        if status == "installed_latest":
+            if latest_ver:
+                desc_text += f"\n✅ 已安装最新版: {installed_ver}"
+            else:
+                desc_text += f"\n✅ 已安装: {installed_ver}"
+        elif status == "upgrade_available":
+            desc_text += f"\n⚠️ 当前: {installed_ver} → 可升级: {latest_ver}"
+        elif latest_ver:
+            desc_text += f"\n最新版本: {latest_ver}"
+        return desc_text
+
     def _on_tool_action(self, tool_key, status):
         """点击卡片右侧按钮"""
         if status in ("not_installed", "upgrade_available"):
@@ -257,22 +273,38 @@ class ToolSelectPage(ctk.CTkFrame):
     def update_tool_status(self, tool_key, installed_version):
         """安装完成后刷新单个工具的状态"""
         self.installed_versions[tool_key] = installed_version
+        self._refresh_tool_status(tool_key)
+
+    def apply_latest_versions(self, latest_versions: dict):
+        """后台联网获取到最新版本后刷新卡片升级状态。"""
+        self.latest_versions.update({k: v for k, v in latest_versions.items() if v})
+        for tool_key in self.latest_versions:
+            self._refresh_tool_status(tool_key)
+
+    def _refresh_tool_status(self, tool_key):
         tool = TOOLS.get(tool_key)
         if not tool or tool_key not in self.tool_buttons:
             return
 
         status, ver = self._get_tool_status(tool_key, tool)
-        latest_ver = tool.get("latest_version")
+        latest_ver = self._get_latest_version(tool_key, tool)
         btn = self.tool_buttons[tool_key]
 
         if status == "not_installed":
             btn.configure(text="安装", fg_color=ACCENT_COLOR,
-                          hover_color="#0099cc", state="normal")
+                          hover_color="#0099cc", state="normal",
+                          command=lambda k=tool_key, s=status: self._on_tool_action(k, s))
         elif status == "installed_latest":
             ver_short = ver[:15] if ver and len(ver) > 15 else ver
             btn.configure(text=f"v{ver_short} ✓", fg_color=SUCCESS_COLOR,
-                          hover_color=SUCCESS_COLOR, state="disabled")
+                          hover_color=SUCCESS_COLOR, state="disabled",
+                          command=lambda k=tool_key, s=status: self._on_tool_action(k, s))
         else:
             btn.configure(text=f"升级 v{latest_ver}",
                           fg_color=WARNING_COLOR,
-                          hover_color="#cc8800", state="normal")
+                          hover_color="#cc8800", state="normal",
+                          command=lambda k=tool_key, s=status: self._on_tool_action(k, s))
+        if tool_key in self.tool_desc_labels:
+            self.tool_desc_labels[tool_key].configure(
+                text=self._build_description(tool_key, tool, status, ver)
+            )

@@ -3,7 +3,7 @@
 ============================================================
   AI 工具一键下载
   一键安装 CC Switch、Python、VS Code、
-  Codex CLI、Claude Code、Hermes Agent
+  Codex CLI、Claude Code、Hermes Agent、OpenClaw
 ============================================================
 
 使用方式:
@@ -107,6 +107,11 @@ def _clean_version(version_str: str, tool_key: str) -> str:
     # Codex CLI: 同样提取版本号
     if tool_key == "codex-cli":
         m = re.search(r'(\d+\.\d+\.\d+)', v)
+        if m:
+            return m.group(1)
+
+    if tool_key == "openclaw":
+        m = re.search(r'(\d+(?:\.\d+){1,3})', v)
         if m:
             return m.group(1)
 
@@ -226,8 +231,11 @@ def show_splash_and_init():
     progress.pack(pady=(0, 10))
     progress.set(0)
 
+    from tools.registry import TOOLS
+    total = len(TOOLS)
+
     progress_text = ctk.CTkLabel(
-        splash, text="0 / 6",
+        splash, text=f"0 / {total}",
         font=ctk.CTkFont(size=12),
         text_color=TEXT_SECONDARY,
     )
@@ -235,8 +243,6 @@ def show_splash_and_init():
 
     # 检测条目
     item_labels = {}
-    from tools.registry import TOOLS
-    total = len(TOOLS)
     completed = [0]
 
     for i, (tool_key, tool) in enumerate(TOOLS.items()):

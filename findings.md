@@ -22,6 +22,11 @@
 - PyInstaller 官方文档：Windows GUI 单文件应用可使用 `--onefile --windowed`，资源通过 `--add-data` 纳入，间接依赖可用 `--hidden-import` 显式声明。来源：https://pyinstaller.org/en/stable/usage.html
 - GitHub CLI Release 文档：Release 可附加本地构建产物作为 asset；本机未安装 `gh`，发布产物上传需要改用已有 git 凭据之外的 Release 上传方式或后续安装/配置 `gh`。来源：https://cli.github.com/manual/gh_release_create
 - GitHub Release assets 官方文档：上传资产时 GitHub 会重命名包含特殊字符、非字母数字字符或首尾句点的文件名，最终应以 List release assets 返回的文件名为准；因此发布资产名改为 ASCII 的 `AI.exe`。来源：https://docs.github.com/en/rest/releases/assets
+- OpenClaw 官网 `https://openclaw.ai/` 指向 OpenClaw 工具；npm 注册信息确认包名为 `openclaw`，bin 命令为 `openclaw`，当前版本 `2026.5.27`，仓库为 `https://github.com/openclaw/openclaw`。本次采用 `npm install -g openclaw`，因为它与官方站点/npm 元数据一致，且符合现有 npm 工具安装模式。来源：https://openclaw.ai/ 与 https://www.npmjs.com/package/openclaw
+- `@openai/codex` npm 当前版本为 `0.135.0`，bin 命令为 `codex`；适合用 npm registry `/latest` 做最新版本检测。来源：https://www.npmjs.com/package/@openai/codex
+- `@anthropic-ai/claude-code` npm 当前版本为 `2.1.156`，bin 命令为 `claude`；适合用 npm registry `/latest` 做最新版本检测。来源：https://www.npmjs.com/package/@anthropic-ai/claude-code
+- `hermes-agent` PyPI 当前版本为 `0.15.2`；适合用 PyPI JSON API 做最新版本检测。来源：https://pypi.org/project/hermes-agent/
+- Hermes 误判根因：验证器只执行 `hermes version`，如果 pip 安装路径未进入当前进程 PATH，即使 `%APPDATA%\Python\Python3xx\Scripts\hermes.exe/cmd` 存在也会显示未安装。应把 check_paths 目录加入 PATH，并在命令失败时用实际脚本路径重试。
 
 ## 范围外问题
 - 暂无。
